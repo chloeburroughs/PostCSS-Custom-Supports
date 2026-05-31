@@ -1,6 +1,6 @@
 # postcss-custom-supports
 
-_Note: I created this plugin for a specific project because I was tired of remembering the advanced attributes @supports query and fighting VS Code's parser. I'm releasing it because I hope it’s helpful. It was built with Claude Opus 4.6.
+_Note: I created this plugin for a specific project because I was tired of remembering the advanced attributes @supports query and fighting VS Code's parser. I'm releasing it because I hope it’s helpful. It was built with Claude Opus 4.6._
 
 A [PostCSS](https://postcss.org/) plugin that brings the [`@custom-media`](https://www.w3.org/TR/mediaqueries-5/#custom-mq) authoring pattern to `@supports` queries. Define a feature-detection condition once, give it a `--name`, and reference it from any number of `@supports` rules.
 
