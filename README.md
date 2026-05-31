@@ -1,5 +1,9 @@
 # postcss-custom-supports
 
+[![CI](https://github.com/chloeburroughs/PostCSS-Custom-Supports/actions/workflows/ci.yml/badge.svg)](https://github.com/chloeburroughs/PostCSS-Custom-Supports/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/postcss-custom-supports.svg)](https://www.npmjs.com/package/postcss-custom-supports)
+[![license](https://img.shields.io/npm/l/postcss-custom-supports.svg)](./LICENSE.md)
+
 _Note: I created this plugin for a specific project because I was tired of remembering the advanced attributes @supports query and fighting VS Code's parser. I'm releasing it because I hope it’s helpful. It was built with Claude Opus 4.6._
 
 A [PostCSS](https://postcss.org/) plugin that brings the [`@custom-media`](https://www.w3.org/TR/mediaqueries-5/#custom-mq) authoring pattern to `@supports` queries. Define a feature-detection condition once, give it a `--name`, and reference it from any number of `@supports` rules.
