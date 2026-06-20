@@ -1,16 +1,13 @@
 'use strict';
 
+const valueParser = require('postcss-value-parser');
+
 // Matches a single @custom-supports declaration:
 //   @custom-supports --name <condition>;
 // PostCSS strips the trailing semicolon and normalizes whitespace before
 // handing us `rule.params`, so a single space between name and condition
 // is all we need to require here.
 const DEFINITION_RE = /^(--[\w-]+)\s+(.+)$/;
-
-// Matches a (--name) reference inside an @supports condition. The negative
-// lookbehind prevents accidental rewrites of identifiers like var(--foo) or
-// attr(--bar), where the leading character before "(" is an ident-char.
-const REFERENCE_RE = /(?<![\w-])\(--[\w-]+\)/g;
 
 const creator = (opts = {}) => {
   const preserve = opts.preserve === true;
@@ -26,7 +23,7 @@ const creator = (opts = {}) => {
 
       return {
         AtRule: {
-          'custom-supports': (rule, { result }) => {
+          'custom-supports'(rule, { result }) {
             const match = rule.params.match(DEFINITION_RE);
             if (!match) {
               rule.warn(result, `Invalid @custom-supports declaration: "${rule.params}"`);
@@ -43,18 +40,53 @@ const creator = (opts = {}) => {
             if (!preserve) rule.remove();
           },
         },
+
         OnceExit(root, { result }) {
-          root.walkAtRules('supports', rule => {
-            rule.params = rule.params.replace(REFERENCE_RE, token => {
-              const name = token.slice(1, -1);
-              const value = customs.get(name);
-              if (value === undefined) {
-                rule.warn(result, `Unknown @custom-supports reference: ${name}`);
-                return token;
+          // Recurse bottom-up so that inner @supports rules are rewritten
+          // before the outer rule is cloned. If we used root.walkAtRules()
+          // instead, replaceWith(clone) would cause the walker to descend into
+          // the detached original rather than the clone, leaving inner
+          // references unexpanded.
+          const processContainer = container => {
+            container.each(node => {
+              if (node.nodes) processContainer(node);
+              if (node.type !== 'atrule' || node.name !== 'supports') return;
+
+              const parsed = valueParser(node.params);
+              let changed = false;
+
+              parsed.walk(valueNode => {
+                // value-parser gives bare parentheses type 'function' with an
+                // empty value string, which naturally excludes named functions
+                // like var(--x) or attr(--x) — cleaner than the lookbehind
+                // regex this replaces.
+                if (valueNode.type !== 'function' || valueNode.value !== '') return;
+                if (valueNode.nodes.length !== 1 || valueNode.nodes[0].type !== 'word') return;
+                const name = valueNode.nodes[0].value;
+                if (!/^--[\w-]+$/.test(name)) return;
+
+                const condition = customs.get(name);
+                if (condition === undefined) {
+                  node.warn(result, `Unknown @custom-supports reference: ${name}`);
+                  return false;
+                }
+
+                // Expand the condition into this paren node; stop descending
+                // so we never re-process the freshly substituted nodes.
+                valueNode.nodes = valueParser(condition).nodes;
+                changed = true;
+                return false;
+              });
+
+              if (changed) {
+                // .clone() preserves the original node's source position so
+                // PostCSS can emit accurate source maps for the rewritten rule.
+                node.replaceWith(node.clone({ params: valueParser.stringify(parsed) }));
               }
-              return `(${value})`;
             });
-          });
+          };
+
+          processContainer(root);
         },
       };
     },
