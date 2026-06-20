@@ -9,6 +9,12 @@ async function run(input, opts) {
   return postcss([customSupports(opts)]).process(input, { from: undefined });
 }
 
+function assertOneWarning(result, pattern) {
+  const warnings = result.warnings();
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0].text, pattern);
+}
+
 test('replaces (--name) with the defined condition', async () => {
   const { css } = await run(
     '@custom-supports --inert interactivity: inert;' +
@@ -101,9 +107,7 @@ test('passes through unchanged when no definitions are present', async () => {
 test('warns and leaves unknown (--name) references untouched', async () => {
   const result = await run('@supports (--undefined) { a { color: red } }');
   assert.match(result.css, /@supports \(--undefined\)/);
-  const warnings = result.warnings();
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0].text, /Unknown @custom-supports reference: --undefined/);
+  assertOneWarning(result, /Unknown @custom-supports reference: --undefined/);
 });
 
 test('warns on duplicate definitions and keeps the last one', async () => {
@@ -113,9 +117,7 @@ test('warns on duplicate definitions and keeps the last one', async () => {
     '@supports (--x) { a { color: red } }'
   );
   assert.match(result.css, /@supports \(display: flex\)/);
-  const warnings = result.warnings();
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0].text, /--x is redefined/);
+  assertOneWarning(result, /--x is redefined/);
 });
 
 test('warns on and removes malformed declarations', async () => {
@@ -124,9 +126,26 @@ test('warns on and removes malformed declarations', async () => {
     'a { color: red }'
   );
   assert.doesNotMatch(result.css, /@custom-supports/);
-  const warnings = result.warnings();
-  assert.equal(warnings.length, 1);
-  assert.match(warnings[0].text, /Invalid @custom-supports declaration/);
+  assertOneWarning(result, /Invalid @custom-supports declaration/);
+});
+
+test('does not rewrite (--name) tokens inside quoted strings', async () => {
+  // postcss-value-parser sees string nodes as a distinct type; bare-paren
+  // detection never fires inside a quoted string.
+  const { css } = await run(
+    '@custom-supports --grid display: grid;' +
+    '@supports not (--grid) and (content: "(--grid)") { a { color: red } }'
+  );
+  assert.match(css, /not \(display: grid\)/);
+  assert.match(css, /content: "\(--grid\)"/);
+});
+
+test('handles selector() condition form', async () => {
+  const { css } = await run(
+    '@custom-supports --has selector(:has(a));' +
+    '@supports (--has) { a { color: red } }'
+  );
+  assert.match(css, /@supports \(selector\(:has\(a\)\)\)/);
 });
 
 test('finds definitions nested inside @layer and @media', async () => {

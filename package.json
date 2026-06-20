@@ -1,6 +1,6 @@
 {
   "name": "postcss-custom-supports",
-  "version": "0.1.4",
+  "version": "1.0.0",
   "description": "PostCSS plugin that mirrors @custom-media for @supports queries, letting you alias verbose or experimental feature-detection conditions behind a custom name.",
   "author": "Chloe Burroughs <chloe@pfr.wtf>",
   "repository": {
@@ -16,7 +16,7 @@
     "index.js"
   ],
   "scripts": {
-    "test": "node --test index.test.js"
+    "test": "c8 node --test index.test.js"
   },
   "keywords": [
     "postcss",
@@ -24,16 +24,21 @@
     "css",
     "supports",
     "custom-supports",
-    "feature-queries"
+    "feature-queries",
+    "atRules"
   ],
   "peerDependencies": {
     "postcss": "^8.4.0"
   },
   "devDependencies": {
+    "c8": "^11.0.0",
     "postcss": "^8.4.0"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "postcss-value-parser": "^4.2.0"
+  }
 }

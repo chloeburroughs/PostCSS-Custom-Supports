@@ -54,11 +54,73 @@ npm install --save-dev postcss-custom-supports
 
 ## Usage
 
+**CommonJS**
+
 ```js
 const postcss = require('postcss');
 const customSupports = require('postcss-custom-supports');
 
 postcss([customSupports(/* options */)]).process(css);
+```
+
+**Vite** — add to `css.postcss` in `vite.config.js` / `vite.config.ts`:
+
+```js
+import { defineConfig } from 'vite';
+import customSupports from 'postcss-custom-supports';
+
+export default defineConfig({
+  css: {
+    postcss: {
+      plugins: [customSupports(/* options */)],
+    },
+  },
+});
+```
+
+**Tailwind CSS v3** — add to `postcss.config.mjs` alongside your other PostCSS plugins:
+
+```js
+import tailwindcss from 'tailwindcss';
+import customSupports from 'postcss-custom-supports';
+
+export default {
+  plugins: [
+    tailwindcss,
+    customSupports(/* options */),
+  ],
+};
+```
+
+**Tailwind CSS v4 + Vite** — Tailwind ships as a Vite plugin in v4; add this plugin to `css.postcss` in `vite.config.js`:
+
+```js
+import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
+import customSupports from 'postcss-custom-supports';
+
+export default defineConfig({
+  plugins: [tailwindcss()],
+  css: {
+    postcss: {
+      plugins: [customSupports(/* options */)],
+    },
+  },
+});
+```
+
+**Tailwind CSS v4 + PostCSS** (non-Vite) — use `@tailwindcss/postcss` in `postcss.config.mjs`:
+
+```js
+import tailwindcss from '@tailwindcss/postcss';
+import customSupports from 'postcss-custom-supports';
+
+export default {
+  plugins: [
+    tailwindcss,
+    customSupports(/* options */),
+  ],
+};
 ```
 
 ### Options
@@ -86,6 +148,8 @@ A reference is the literal token `(--<name>)`, used anywhere a parenthesized sup
 ```
 
 References inside function calls (`var(--name)`, `attr(--name)`, etc.) are **not** rewritten, so it is safe to reference custom properties in supports conditions.
+
+_Note: When we call a custom supports token, we wrap it in parentheses. This follows the structure of postcss-custom-media, but it also gives an easier visual indicator of the token, compared to without parentheses. It’s a taste thing, but it made sense to me._
 
 ## Warnings
 
