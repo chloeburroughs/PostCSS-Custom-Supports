@@ -140,12 +140,39 @@ test('does not rewrite (--name) tokens inside quoted strings', async () => {
   assert.match(css, /content: "\(--grid\)"/);
 });
 
-test('handles selector() condition form', async () => {
+test('handles selector() condition form without extra parens', async () => {
   const { css } = await run(
     '@custom-supports --has selector(:has(a));' +
     '@supports (--has) { a { color: red } }'
   );
-  assert.match(css, /@supports \(selector\(:has\(a\)\)\)/);
+  assert.match(css, /@supports selector\(:has\(a\)\)/);
+  assert.doesNotMatch(css, /@supports \(selector/);
+});
+
+test('handles at-rule() condition form without extra parens', async () => {
+  const { css } = await run(
+    '@custom-supports --layer at-rule(@layer);' +
+    '@supports (--layer) { a { color: red } }'
+  );
+  assert.match(css, /@supports at-rule\(@layer\)/);
+  assert.doesNotMatch(css, /@supports \(at-rule/);
+});
+
+test('handles not with at-rule() condition form', async () => {
+  const { css } = await run(
+    '@custom-supports --layer at-rule(@layer);' +
+    '@supports not (--layer) { a { color: red } }'
+  );
+  assert.match(css, /@supports not at-rule\(@layer\)/);
+});
+
+test('handles mixed property and at-rule() conditions', async () => {
+  const { css } = await run(
+    '@custom-supports --grid display: grid;' +
+    '@custom-supports --layer at-rule(@layer);' +
+    '@supports (--grid) and (--layer) { a { color: red } }'
+  );
+  assert.match(css, /@supports \(display: grid\) and at-rule\(@layer\)/);
 });
 
 test('finds definitions nested inside @layer and @media', async () => {
