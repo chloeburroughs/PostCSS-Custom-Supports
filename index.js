@@ -54,8 +54,9 @@ const creator = (opts = {}) => {
 
               const parsed = valueParser(node.params);
               let changed = false;
+              const unwraps = [];
 
-              parsed.walk(valueNode => {
+              parsed.walk((valueNode, idx, siblings) => {
                 // value-parser gives bare parentheses type 'function' with an
                 // empty value string, which naturally excludes named functions
                 // like var(--x) or attr(--x) — cleaner than the lookbehind
@@ -71,12 +72,31 @@ const creator = (opts = {}) => {
                   return false;
                 }
 
-                // Expand the condition into this paren node; stop descending
-                // so we never re-process the freshly substituted nodes.
-                valueNode.nodes = valueParser(condition).nodes;
+                const conditionNodes = valueParser(condition).nodes;
+
+                // Top-level functional notations like selector() and at-rule()
+                // are self-delimiting — they must not be wrapped in an extra set
+                // of parentheses. Defer the splice so that earlier replacements
+                // don't shift the indices of later ones.
+                const isFunctionForm =
+                  conditionNodes.length === 1 &&
+                  conditionNodes[0].type === 'function' &&
+                  conditionNodes[0].value !== '';
+
+                if (isFunctionForm) {
+                  unwraps.push({ siblings, idx, nodes: conditionNodes });
+                } else {
+                  valueNode.nodes = conditionNodes;
+                }
                 changed = true;
                 return false;
               });
+
+              // Apply in reverse index order so earlier splices don't corrupt
+              // the positions of later ones.
+              for (const { siblings, idx, nodes } of unwraps.reverse()) {
+                siblings.splice(idx, 1, ...nodes);
+              }
 
               if (changed) {
                 // .clone() preserves the original node's source position so

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-06-23
+
+### Changed
+
+- Functional-notation conditions (`selector(...)`, `at-rule(...)`, `font-tech(...)`, etc.) are now substituted without wrapping parentheses, producing the correct top-level form — e.g. `@supports selector(:has(a))` rather than `@supports (selector(:has(a)))`. Property-declaration conditions (`property: value`) are unaffected.
+
+### Added
+
+- Four new tests covering `at-rule()` standalone, `not at-rule()`, mixed property + `at-rule()` compound conditions, and the corrected `selector()` paren-free output.
+
+### Documentation
+
+- Updated the Syntax section of the README to document both condition forms and show the output shape for each.
+- Added EXAMPLES.md that shows a wider range of `@supports` queries, how to token them, and how to call the token. Or just copy paste them for your own library because I haven't put one together yet.
+
 ## [1.0.0] - 2026-06-20
 
 ### Changed
@@ -84,6 +99,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Negative-lookbehind guard preventing accidental rewrites of `(--name)`
   tokens nested inside function calls like `var(--name)` or `attr(--name)`.
 
+[1.1.0]: https://github.com/chloeburroughs/PostCSS-Custom-Supports/releases/tag/v1.1.0
 [1.0.0]: https://github.com/chloeburroughs/PostCSS-Custom-Supports/releases/tag/v1.0.0
 [0.1.4]: https://github.com/chloeburroughs/PostCSS-Custom-Supports/releases/tag/v0.1.4
 [0.1.3]: https://github.com/chloeburroughs/PostCSS-Custom-Supports/releases/tag/v0.1.3

@@ -4,8 +4,6 @@
 [![npm version](https://img.shields.io/npm/v/postcss-custom-supports.svg)](https://www.npmjs.com/package/postcss-custom-supports)
 [![license](https://img.shields.io/npm/l/postcss-custom-supports.svg)](./LICENSE.md)
 
-_Note: I created this plugin for a specific project because I was tired of remembering the advanced attributes @supports query and fighting VS Code's parser. I'm releasing it because I hope it’s helpful. It was built with Claude Opus 4.6._
-
 A [PostCSS](https://postcss.org/) plugin that brings the [`@custom-media`](https://www.w3.org/TR/mediaqueries-5/#custom-mq) authoring pattern to `@supports` queries. Define a feature-detection condition once, give it a `--name`, and reference it from any number of `@supports` rules.
 
 ```css
@@ -44,7 +42,14 @@ becomes
 
 ## Why
 
-Real-world `@supports` conditions are often verbose (`x: attr(x type(*))`), brittle to type, and visually noisy when repeated across a stylesheet. They also confuse some editor parsers when the value uses bleeding-edge syntax. Aliasing them behind a stable `--name` mirrors how `@custom-media` keeps breakpoints readable.
+Using `@supports` kind of sucks. The queries are verbose, brittle, and sometimes a little nonsensical. The [CSS-Tricks recommended query](https://css-tricks.com/almanac/functions/a/attr/) for typed `attr()` is `@supports (x: attr(x type(*))) {}`, which is borderline nonsensical until you actually break down the logic. It also breaks VS Code's CSS parser, so everything after that line gets flagged as invalid.
+
+Enabling PostCSS parsing in VS Code makes the errors go away — but you're still writing the same complex, brittle query every time you need that gate. Progressive enhancement means `@supports` conditions aren't one-offs: the same feature check shows up once per component that uses it, repeated across your stylesheet. That's multiple places to update when a draft spec changes syntax mid-cycle, and multiple opportunities for a silent typo that breaks the fallback entirely.
+
+Aliasing behind a stable name solves both problems at once. Define the condition once, reference it everywhere, update in one place. The same pattern [postcss-custom-media](https://www.npmjs.com/package/postcss-custom-media) uses for
+breakpoints — just for `@supports`.
+
+**TL;DR:** Get rid of parser errors, reuse complicated and verbose `@supports` queries.
 
 ## Install
 
@@ -137,7 +142,16 @@ A declaration:
 @custom-supports --<name> <condition>;
 ```
 
-`<condition>` is any string that would be valid inside the parentheses of a normal `@supports` query — typically `property: value`, but also `selector(...)`, `font-tech(...)`, etc.
+`<condition>` is any string that would be valid as a `@supports` condition. Two forms are supported:
+
+- **Property declarations** — `property: value`. The plugin wraps these in parentheses when substituting, producing `(property: value)`.
+- **Functional notations** — `selector(...)`, `at-rule(...)`, `font-tech(...)`, etc. These are self-delimiting and are substituted as-is, without extra parentheses.
+
+```css
+@custom-supports --grid display: grid;
+@custom-supports --layer at-rule(@layer);
+@custom-supports --has selector(:has(a));
+```
 
 A reference is the literal token `(--<name>)`, used anywhere a parenthesized supports condition is allowed:
 
@@ -145,6 +159,14 @@ A reference is the literal token `(--<name>)`, used anywhere a parenthesized sup
 @supports (--name) { … }
 @supports not (--name) { … }
 @supports (--a) and (--b) { … }
+```
+
+The output form depends on the condition type:
+
+```css
+@supports (display: grid) { … }       /* property declaration */
+@supports at-rule(@layer) { … }       /* functional notation */
+@supports not selector(:has(a)) { … } /* functional notation */
 ```
 
 References inside function calls (`var(--name)`, `attr(--name)`, etc.) are **not** rewritten, so it is safe to reference custom properties in supports conditions.
@@ -158,6 +180,10 @@ The plugin emits PostCSS warnings (not errors) for:
 - Malformed `@custom-supports` declarations (missing condition).
 - Redefinition of a name (the last definition wins).
 - References to undefined names (left untouched in the output).
+
+## Why I made this
+
+_Note: I created this plugin for a specific project because I was tired of remembering the advanced attributes @supports query and fighting VS Code's parser. I'm releasing it because I hope it’s helpful. It was built with Claude Opus 4.6._
 
 ## License
 
