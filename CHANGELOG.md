@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-09-09
+
+### Security
+
+- Bumped `postcss` (devDependency/peer range) to 8.5.23, resolving [GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q) (path traversal / arbitrary `.map` file disclosure via `sourceMappingURL` when `from` is unset) and its follow-up incomplete-fix advisory.
+- Bumped `brace-expansion` (transitive) to 5.0.9, resolving a ReDoS advisory (exponential-time expansion of consecutive non-expanding `{}` groups).
+
+### Changed
+
+- Bumped `c8` from `^11.0.0` to `^12.0.0` (dev-dependencies group update).
+- Bumped `actions/checkout` to v7.0.1 and `actions/setup-node` to v7.0.0 in CI/publish workflows.
+
 ## [1.1.0] - 2026-06-23
 
 ### Changed
